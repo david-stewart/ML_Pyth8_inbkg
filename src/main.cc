@@ -51,20 +51,27 @@ int main(int nargs, char** argv) {
   bool print_matched      { true };
 
   TFile* f_out = new TFile (f_outname.c_str(),"recreate");
+  
+  // Background particles
+  BkgGen bkgmaker;
+  bkgmaker.seed            = bkg_seed;
+  bkgmaker.T               = 0.291;
+  bkgmaker.include_neutral = true;
+  bkgmaker.minPtCut        = 0.2;
+  bkgmaker.init();
 
   // Pythia 8 particles
-  cout << " Pyth8 seed: " << pyth_seed << endl;
-  P8Gen p8maker {pyth_seed};
-  p8maker.name_type = "pp";
-  p8maker.sNN       = 200.;
-  p8maker.pTHatMin  = 30.;
-  p8maker.pTHatMax  = 2000.;
+  P8Gen p8maker {};
+  p8maker.seed            = pyth_seed;
+  p8maker.name_type       = "pp";
+  p8maker.sNN             = 200.;
+  p8maker.pTHatMin        = 30.;
+  p8maker.pTHatMax        = 2000.;
+  p8maker.collect_neutral = true;
+  p8maker.collect_charged = true;
   p8maker.init();
 
 
-  // Background particles
-  BkgGen bkgmaker { bkg_seed };
-  bkgmaker.T = 0.001;
 
   // JetClusterer
   JetClusterer clusterer {};
@@ -82,7 +89,7 @@ int main(int nargs, char** argv) {
   for (int nev=0;nev<n_events;++nev) {
     // PYTHIA8 jets
     auto part_P = p8maker();
-    auto jets_P = clusterer(part_P.first); // charged jets
+    auto jets_P = clusterer(part_P); // charged jets
 
     if (print_Pythia8_jets) { 
       cout << " --- Jets from PYTHIA8 --- " << endl;
@@ -91,7 +98,6 @@ int main(int nargs, char** argv) {
 
     // Background added in
     auto part_B = bkgmaker();
-    part_B.insert(part_B.end(), part_P.first.begin(), part_P.first.end());
     auto jets_PB = clusterer(part_B);
 
     if (print_Pyth_and_Bkg) { 

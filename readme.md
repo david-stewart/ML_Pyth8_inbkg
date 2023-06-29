@@ -10,4 +10,6 @@ in eta<|1|, phi\in[-pi,pi]
       `./obj`
 
   * Make a virtual link to an instalation of fastjet3
-  * Udate `./Makefile` for paths for libraries for `root6`, `Pythia8`, and `fastjet3`
+  * Update `./Makefile` for paths for libraries for `root6`, `Pythia8`, and `fastjet3`
+  * run: `./make`
+

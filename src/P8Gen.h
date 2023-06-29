@@ -16,16 +16,19 @@ struct P8Gen {
   double maxEta   { 1.0 };
   double minPtCut { 0.2 };
   double PionMass { 0.13957 };
-  int    seed;
   bool   usePionMass { false }; // will use actual particle mass
+  bool   collect_neutral { true };
+  bool   collect_charged { true };
   std::string name_type { "pp" };
+  int    seed { 0 };
+  int    nMaxBadGenerations = 10;
 
   Pythia8::Pythia pythia;
 
-  P8Gen(int _seed) : seed {_seed} {};
+  P8Gen() {};
   bool is_init { false };
   void init();
-  std::pair<std::vector<fastjet::PseudoJet>,std::vector<fastjet::PseudoJet>> operator()();
+  std::vector<fastjet::PseudoJet> operator()();
 };
 
 #endif

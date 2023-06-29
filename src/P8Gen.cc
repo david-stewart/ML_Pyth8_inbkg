@@ -32,34 +32,49 @@ void P8Gen::init() {
   pythia.init();
 };
 
-pair<vector<PseudoJet> /*charged*/,vector<PseudoJet> /*neutral*/> P8Gen::operator()() {
+vector<PseudoJet> P8Gen::operator()() {
   assert(is_init);
+
+  int ntries = 1;
   bool good_event = pythia.next();
   while (!good_event) {
-    /* cout << "Warning: skipping bad `Pythia::next()` return value" << endl; */
-    cout << " . ";
+    ++ntries;
+    if (ntries > nMaxBadGenerations) {
+      cout << " Pythia8 failed to generate a good event " << ntries << " successive times." << endl;
+      cout << " Aborting program." << endl;
+      assert(ntries <= nMaxBadGenerations);
+    }
     good_event = pythia.next();
   } 
 
   auto& event = pythia.event ;
 
-  std::vector <fastjet::PseudoJet> ch_vec; // charged vec
-  std::vector <fastjet::PseudoJet> ne_vec; // neutral vec
+  std::vector <fastjet::PseudoJet> p_vec; // charged vec
 
   for (int i {0}; i < event.size(); ++i) {
     if (!event[i].isFinal()) continue;
     auto& e     { event[i] };
+
+    bool isCharged = e.isCharged();
+    if ((isCharged  && !collect_charged) 
+    ||  (!isCharged && !collect_neutral)) continue;
+
     double pAbs { e.pAbs() };
-    if (pAbs < minPtCut) continue;
+
     double eta { e.eta() };
-    double pt  { e.pT()  };
     if ( fabs(eta) > maxEta ) continue;
-    double phi { e.phi()  };
-    // do we want actual location or 
+
+    double pt { e.pT() };
+    if (pt < minPtCut) continue;
+
+    double phi { e.phi() };
+
     fastjet::PseudoJet p;
     p.reset_PtYPhiM(pt, eta, phi, usePionMass ? PionMass : e.m());
-    (e.isCharged() ? ch_vec : ne_vec).push_back(p);
+    p.set_user_index(static_cast<int>(e.charge()));
+    p_vec.push_back(p);
   }
-  return {ch_vec, ne_vec};
+  return p_vec;
+  
 };
 
